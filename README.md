@@ -1,8 +1,13 @@
 # Web Research Agent (LangChain + Tavily)
 
-A simple command-line agent that answers **one** research question using live web
-search. You ask a question; the agent searches the web with Tavily, writes a
-concise answer with sources, prints it, and exits.
+Simple command-line agents that answer research questions using live web
+search. The agent searches the web with Tavily and writes a concise answer with
+sources. There are two versions:
+
+| File | What it does |
+|---|---|
+| `single_query_agent.py` | Answers **one** question, then exits |
+| `chat_agent.py` | Keeps taking questions and **remembers** the conversation (LangGraph memory) |
 
 ## How it works
 
@@ -19,8 +24,9 @@ question ──► LLM (via OpenRouter) ──► tavily_search ──► result
 - **Search tool:** `TavilySearch` from `langchain-tavily`, returning the top 5 results.
 - **Agent loop:** LangChain's `create_agent` lets the model decide when to search
   and when it has enough to answer.
-- **One-shot:** each run handles a single question. There is no chat history or
-  follow-up.
+- **Memory (chat agent only):** LangGraph's `InMemorySaver` stores the
+  conversation, so follow-ups like "what is its population?" work. The history
+  is cleared when the program exits.
 
 ## Requirements
 
@@ -55,16 +61,18 @@ If any of these is missing, the agent stops with a message naming the missing va
 
 ## Usage
 
+### Single-question agent
+
 Pass the question as an argument:
 
 ```bash
-python src/research_agent/agent.py "What is the latest stable release of Python?"
+python src/research_agent/single_query_agent.py "What is the latest stable release of Python?"
 ```
 
 Or run it with no arguments and type the question when prompted:
 
 ```bash
-python src/research_agent/agent.py
+python src/research_agent/single_query_agent.py
 Ask your research question: What is the latest development in AI?
 ```
 
@@ -72,8 +80,25 @@ The "Researching..." status line goes to stderr and the answer goes to stdout, s
 you can save only the answer:
 
 ```bash
-python src/research_agent/agent.py "Compare the top open-source vector databases" > answer.md
+python src/research_agent/single_query_agent.py "Compare the top open-source vector databases" > answer.md
 ```
+
+### Chat agent (multiple questions)
+
+```bash
+python src/research_agent/chat_agent.py
+```
+
+```
+You: What is the capital of Australia?
+Agent: The capital of Australia is Canberra. [1] ...
+You: What is its population?
+Agent: The population of Canberra is approximately ... [1] ...
+You: exit
+Goodbye!
+```
+
+Type `exit`, `quit` or `bye` (or press Ctrl+C) to stop.
 
 ### Use from Python
 
@@ -81,7 +106,7 @@ python src/research_agent/agent.py "Compare the top open-source vector databases
 import sys
 sys.path.insert(0, "src")
 
-from research_agent.agent import research
+from research_agent.single_query_agent import research
 
 print(research("Who won the most recent Nobel Prize in Physics?"))
 ```
@@ -90,15 +115,19 @@ print(research("Who won the most recent Nobel Prize in Physics?"))
 
 ```
 .
-├── src/research_agent/agent.py   # the agent: model, Tavily tool, prompt, CLI entry point
-├── requirements.txt              # Python dependencies
-├── .env.example                  # template for API keys and model name
+├── src/research_agent/
+│   ├── single_query_agent.py   # one question, then exit
+│   └── chat_agent.py           # many questions, remembers the conversation
+├── requirements.txt            # Python dependencies
+├── .env.example                # template for API keys and model name
 └── README.md
 ```
 
 ## Customizing
 
-All settings are in [`src/research_agent/agent.py`](src/research_agent/agent.py):
+Settings are at the top of each agent file
+([`single_query_agent.py`](src/research_agent/single_query_agent.py),
+[`chat_agent.py`](src/research_agent/chat_agent.py)):
 
 - **Number of search results:** change `TavilySearch(max_results=5)`.
 - **Answer style:** edit `SYSTEM_PROMPT`.

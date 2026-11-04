@@ -4,8 +4,8 @@ The user asks a single question; the agent searches the web with Tavily,
 writes a cited answer, prints it, and exits.
 
 Usage:
-    python src/research_agent/agent.py "What is the latest development in AI"
-    python src/research_agent/agent.py          # prompts for the question
+    python src/research_agent/single_query_agent.py "What is the latest development in AI"
+    python src/research_agent/single_query_agent.py          # prompts for the question
 """
 
 import os
